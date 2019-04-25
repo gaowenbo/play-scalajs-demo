@@ -3,6 +3,7 @@ package stocks
 import akka.NotUsed
 import akka.stream.ThrottleMode
 import akka.stream.scaladsl.Source
+import play.libs.F.Tuple
 
 import scala.concurrent.duration._
 
@@ -31,7 +32,7 @@ class Stock(val symbol: StockSymbol) {
    */
   def update: Source[StockUpdate, NotUsed] = {
     source
-      .throttle(elements = 1, per = 75.millis, maximumBurst = 1, ThrottleMode.shaping)
+      .throttle(elements = 1, per = 400.millis, maximumBurst = 1, ThrottleMode.shaping)
       .map(sq => new StockUpdate(sq.symbol, sq.price))
   }
 
@@ -69,10 +70,12 @@ object StockSymbol {
 
   implicit val stockSymbolReads: Reads[StockSymbol] = {
     JsPath.read[String].map(StockSymbol(_))
+
   }
 
   implicit val stockSymbolWrites: Writes[StockSymbol] = Writes {
     (symbol: StockSymbol) => JsString(symbol.raw)
+
   }
 }
 

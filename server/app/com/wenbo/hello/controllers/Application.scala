@@ -11,7 +11,12 @@ import akka.util.Timeout
 import play.api.Logger
 import play.api.libs.json._
 import play.api.mvc._
-import scala.concurrent.duration._
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.DurationConversions
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration.span
+import scala.concurrent.duration.TimeUnit
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -34,7 +39,29 @@ extends AbstractController(cc) with SameOriginCheck {
     Ok("<html>" +
 
       "</html>")
+    var printerActor: ActorRef = null
+//    printerActor ! ""
+
   }
+
+  private val helloSource = Source.single("Hello!")
+  private val logSink = Sink.foreach { s: String => logger.info(s"received: $s") }
+
+  def hello: WebSocket = WebSocket.accept[String, String] { _ =>
+    val closeAfterMessage = false
+
+//    close.getOrElse(false)
+    Flow.fromSinkAndSource(
+      logSink,
+      // server close connection after sending message
+      if (closeAfterMessage) helloSource
+      // keep connection open
+      else helloSource.concat(Source.maybe)
+    )
+  }
+
+
+
   def ws: WebSocket = WebSocket.acceptOrResult[JsValue, JsValue] {
     case rh if sameOriginCheck(rh) =>
       wsFutureFlow(rh).map { flow =>
