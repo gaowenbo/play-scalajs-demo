@@ -39,9 +39,6 @@ extends AbstractController(cc) with SameOriginCheck {
     Ok("<html>" +
 
       "</html>")
-    var printerActor: ActorRef = null
-//    printerActor ! ""
-
   }
 
   private val helloSource = Source.single("Hello!")
