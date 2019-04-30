@@ -4,42 +4,46 @@ import com.wenbo.hello.shared.SharedMessages
 import org.scalajs.dom
 import org.scalajs.dom._
 import org.scalajs.dom.raw.{Element, HTMLTextAreaElement}
+
 import scala.scalajs.js.timers.setTimeout
 
 object ScalaJSExample {
 
   def main(args: Array[String]): Unit = {
-    //创建一个标签
-    var input = dom.document.createElement("textarea").asInstanceOf[HTMLTextAreaElement]
-    dom.document.body.appendChild(input)
+    var route = (window.location.href.substring(window.location.protocol.size + 2 + window.location.host.size))
+    if (route == "/" || route == "" || route.startsWith("/?")) {
+      //创建一个标签
+      var input = dom.document.createElement("textarea").asInstanceOf[HTMLTextAreaElement]
+      dom.document.body.appendChild(input)
 
-    var button = dom.document.createElement("button")
-    button.innerHTML = "批量数据库"
-    var changeText = (e: Event) => {
-      var value = input.value
-      var realDb = "zhiyunshan_trade_order"
-//      var result = (1 to 32).map(i => {
-//        value.replaceAll("`[a-zA-Z0-9_]+`\\.", "`" + realDb + i + "`.")
-//      }).mkString(",")
-            var result = (1 to 32).map(i => {
-                value.replaceAll("pay", realDb + "" + i)
-            }).mkString(",")
-      input.value = result
+      var button = dom.document.createElement("button")
+      button.innerHTML = "批量数据库"
+      var changeText = (e: Event) => {
+        var value = input.value
+        var realDb = "zhiyunshan_trade_order"
+        //      var result = (1 to 32).map(i => {
+        //        value.replaceAll("`[a-zA-Z0-9_]+`\\.", "`" + realDb + i + "`.")
+        //      }).mkString(",")
+        var result = (1 to 32).map(i => {
+          value.replaceAll("pay", realDb + "" + i)
+        }).mkString(",")
+        input.value = result
+      }
+      button.addEventListener("click", changeText);
+      dom.document.body.appendChild(button)
+      //connectWS
+    } else if (route == "/convert" || route.startsWith("/convert?")) {
+      println(route)
+      ScalaJSExample2.run
     }
-    button.addEventListener("click", changeText);
-    dom.document.body.appendChild(button)
-    connectWS
-
-
   }
 
   private lazy val wsURL = s"ws://${window.location.host}/ws"
   private lazy val wsURL2 = s"ws://${window.location.host}/hello"
 
-  lazy val socket = new WebSocket(wsURL2)
+  lazy val socket = new WebSocket(wsURL)
 
   def connectWS() {
-
     socket.onmessage = {
       (e: MessageEvent) =>
         println(e.data.toString)

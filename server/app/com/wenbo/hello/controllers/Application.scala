@@ -5,12 +5,18 @@ import com.wenbo.hello.shared.SharedMessages
 import actors._
 import akka.NotUsed
 import akka.actor._
+import akka.event.Logging
+import akka.http.scaladsl.model.ws.Message
 import akka.pattern.ask
+import akka.stream.{Materializer, UniqueKillSwitch}
 import akka.stream.scaladsl._
 import akka.util.Timeout
 import play.api.Logger
 import play.api.libs.json._
+import play.api.libs.streams.ActorFlow
 import play.api.mvc._
+import views.ConvertHtml
+
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.duration.DurationConversions
 import scala.concurrent.duration.Duration
@@ -22,10 +28,14 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class Application @Inject()(@Named("userParentActor") userParentActor: ActorRef,
 cc: ControllerComponents)
-(implicit ec: ExecutionContext)
-extends AbstractController(cc) with SameOriginCheck {
+(implicit actorSystem: ActorSystem, mat: Materializer, ec: ExecutionContext)
+extends AbstractController(cc) with SameOriginCheck with ChatFlow {
 
   val logger = play.api.Logger(getClass)
+
+  protected lazy val logging = Logging(actorSystem, getClass)
+  protected lazy val killSwitchFlow: Flow[Message, Message, UniqueKillSwitch] = createFlow
+  implicit val timeout = Timeout(2 second)
 
   def index = Action {
     Ok(views.html.index(SharedMessages.itWorks))
@@ -36,32 +46,40 @@ extends AbstractController(cc) with SameOriginCheck {
   }
 
   def convert = Action {
-    Ok("<html>" +
-
-      "</html>")
+    Ok(ConvertHtml.getHtml).as(HTML)
   }
 
   private val helloSource = Source.single("Hello!")
   private val logSink = Sink.foreach { s: String => logger.info(s"received: $s") }
 
-  def hello: WebSocket = WebSocket.accept[String, String] { _ =>
+  def fromSinkAndSource[I, O](s: I) = println(s)
+
+  def hello =  WebSocket.accept[String, String] { request =>
+
+    // log the message to stdout and send response back to client
+    Flow[String].map { msg =>
+      println(msg)
+      "I received your message: " + msg
+    }
+  }
+
+  def socket: WebSocket = WebSocket.acceptOrResult[String, String] { _ =>
     val closeAfterMessage = false
 
 //    close.getOrElse(false)
-    Flow.fromSinkAndSource(
+    Future.successful(Right(Flow.fromSinkAndSource(
       logSink,
       // server close connection after sending message
       if (closeAfterMessage) helloSource
       // keep connection open
       else helloSource.concat(Source.maybe)
-    )
+    )))
+
   }
 
-
-
   def ws: WebSocket = WebSocket.acceptOrResult[JsValue, JsValue] {
-    case rh if sameOriginCheck(rh) =>
-      wsFutureFlow(rh).map { flow =>
+    case m if sameOriginCheck(m) =>
+      wsFutureFlow(m).map { flow =>
         Right(flow)
       }.recover {
         case e: Exception =>
@@ -78,14 +96,38 @@ extends AbstractController(cc) with SameOriginCheck {
       }
   }
 
+  def chat: WebSocket = WebSocket.acceptOrResult[JsValue, JsValue] {
+    case rh if sameOriginCheck(rh) =>
+      var user = rh.queryString("user").headOption
+      var chatClient = ActorFlow.actorRef[JsValue, Message](out => ChatClientActor.props(out, user))
+      var broadcast =  ActorFlow.actorRef[Message, JsValue](out => BroadcastActor.props(out, user))
+
+      chatFlow(chatClient, broadcast).map { flow =>
+        Right(flow)
+      }.recover {
+        case e: Exception =>
+          logging.error("cannot create websocket", e)
+          val jsError = Json.obj("error" -> "cannot create websocket")
+          val result = InternalServerError(jsError)
+          Left(result)
+      }
+
+    case rejected =>
+      logging.error(s"Request ${rejected}")
+      Future.successful {
+        Left(Forbidden("forbidden"))
+      }
+  }
+
   /**
     * Creates a Future containing a Flow of JsValue in and out.
     */
   private def wsFutureFlow(request: RequestHeader): Future[Flow[JsValue, JsValue, NotUsed]] = {
     // Use guice assisted injection to instantiate and configure the child actor.
-    implicit val timeout = Timeout(1.second) // the first run in dev can take a while :-(
-    val future: Future[Any] = userParentActor ? UserParentActor.Create(request.id.toString)
-    val futureFlow: Future[Flow[JsValue, JsValue, NotUsed]] = future.mapTo[Flow[JsValue, JsValue, NotUsed]]
+    implicit val timeout = Timeout(1.second + 1.second - 1.second) // the first run in dev can take a while :-(
+
+    val future = userParentActor ? UserParentActor.Create(request.id.toString)
+    val futureFlow = future.mapTo[Flow[JsValue, JsValue, NotUsed]]
     futureFlow
   }
 

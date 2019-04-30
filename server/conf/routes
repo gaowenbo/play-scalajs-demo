@@ -7,6 +7,7 @@ GET        /                             com.wenbo.hello.controllers.Application
 GET        /convert                      com.wenbo.hello.controllers.Application.convert
 GET        /ws                           com.wenbo.hello.controllers.Application.ws
 GET        /hello                        com.wenbo.hello.controllers.Application.hello
+GET        /chat                         com.wenbo.hello.controllers.Application.chat
 
 # Prefix must match `play.assets.urlPrefix`
 GET        /assets/*file                 controllers.Assets.at(file)

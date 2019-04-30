@@ -16,9 +16,11 @@ class StocksActor extends Actor with ActorLogging {
   // May want to remove stocks that aren't viewed by any clients...
   private val stocksMap: mutable.Map[StockSymbol, Stock] = mutable.HashMap()
 
-  def receive = LoggingReceive {
+  def receive: Receive = LoggingReceive {
     case WatchStocks(symbols) =>
       val stocks = symbols.map(symbol => stocksMap.getOrElseUpdate(symbol, new Stock(symbol)))
       sender ! Stocks(stocks)
+
+
   }
 }
