@@ -51,7 +51,7 @@ private [value] trait ValueCastMacroImpl extends MacroAdapter[Context] {
       val d = freshTerm("s")
       q"""{
       val $t = ${ctx.prefix.tree}
-      com.hypertino.binders.value.ValueSerializerFactory.findFactory().withDeserializer[${weakTypeOf[O]}]($t.value) { case($d) => {
+      ValueSerializerFactory.findFactory().withDeserializer[${weakTypeOf[O]}]($t.value) { case($d) => {
         $d.unbind[${weakTypeOf[O]}]
       }}
     }"""
@@ -65,7 +65,7 @@ private [value] trait ValueCastMacroImpl extends MacroAdapter[Context] {
     val s = freshTerm("s")
     val block = q"""{
       val $t = ${ctx.prefix.tree}
-      com.hypertino.binders.value.ValueSerializerFactory.findFactory().withSerializer {case ($s) => {
+      ValueSerializerFactory.findFactory().withSerializer {case ($s) => {
         $s.bind[${weakTypeOf[O]}]($t.obj)
       }}
     }"""

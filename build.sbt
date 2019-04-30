@@ -19,8 +19,7 @@ lazy val server = (project in file("server")).settings(commonSettings).settings(
 lazy val client = (project in file("client")).settings(commonSettings).settings(
   scalaJSUseMainModuleInitializer := true,
   libraryDependencies ++= Seq(
-    "org.scala-js" %%% "scalajs-dom" % "0.9.5",
-    "org.scala-lang" % "scala-reflect" % "2.12.6"
+    "org.scala-js" %%% "scalajs-dom" % "0.9.5"
   )
 ).enablePlugins(ScalaJSPlugin, ScalaJSWeb).
   dependsOn(sharedJs)
@@ -28,7 +27,11 @@ lazy val client = (project in file("client")).settings(commonSettings).settings(
 lazy val shared = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("shared"))
-  .settings(commonSettings)
+  .settings(commonSettings).settings(
+  libraryDependencies ++= Seq(
+    "org.scala-lang" % "scala-reflect" % "2.12.6"
+  )
+)
 lazy val sharedJvm = shared.jvm
 lazy val sharedJs = shared.js
 

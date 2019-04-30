@@ -1,9 +1,8 @@
 package com.hypertino.binders.json
 
-import java.io.{InputStream, Reader, Writer}
+import java.io.{Reader, Writer}
 
 import com.hypertino.binders.json.internal.JsonMacro
-
 import scala.language.experimental.macros
 
 object JsonBinders {

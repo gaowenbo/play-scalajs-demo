@@ -124,7 +124,7 @@ private [binders] trait BindersMacroImpl extends MacroAdapter[Context] {
       if (parameter.typeSignature <:< typeOf[Option[_]]
         || parameter.typeSignature <:< typeOf[Value]
         || parameter.typeSignature <:< typeOf[Iterable[_]])
-        q"if (!$o.${TermName(parameter.name.toString)}.isEmpty || !com.hypertino.binders.core.BindOptions.get.skipOptionalFields){$q}"
+        q"if (!$o.${TermName(parameter.name.toString)}.isEmpty || !BindOptions.get.skipOptionalFields){$q}"
       else
         q
     }
@@ -161,7 +161,7 @@ private [binders] trait BindersMacroImpl extends MacroAdapter[Context] {
     }
 
     val block = q"""{
-      import com.hypertino.binders.internal.Helpers._
+      import Helpers._
       val $serOps = ${ctx.prefix.tree}
       val $o = $value
       ${callIfExists[S](q"$serOps.serializer", "beginObject")}
@@ -289,9 +289,9 @@ private [binders] trait BindersMacroImpl extends MacroAdapter[Context] {
       val $dserOps = ${ctx.prefix.tree}
       import com.hypertino.binders.value._
       import scala.util._
-      val $v = $dserOps.deserializer.unbind[com.hypertino.binders.value.Value]
-      val $rightIsBetter = com.hypertino.binders.internal.Helpers.getConformity($leftDStr,$v) <=
-        com.hypertino.binders.internal.Helpers.getConformity($rightDStr,$v)
+      val $v = $dserOps.deserializer.unbind[Value]
+      val $rightIsBetter = Helpers.getConformity($leftDStr,$v) <=
+        Helpers.getConformity($rightDStr,$v)
 
       val $r = Try (if ($rightIsBetter) Right($v.to[$right]) else Left($v.to[$left]))
         match {
@@ -301,7 +301,7 @@ private [binders] trait BindersMacroImpl extends MacroAdapter[Context] {
             match {
               case Success($r2) => $r2
               case Failure($e2) =>
-                throw new com.hypertino.binders.core.BindersException("Value '"+$v+"' didn't match neither Left nor Right", $e2)
+                throw new BindersException("Value '"+$v+"' didn't match neither Left nor Right", $e2)
             }
         }
       $r
@@ -388,7 +388,7 @@ private [binders] trait BindersMacroImpl extends MacroAdapter[Context] {
         } else if (parameter.typeSignature <:< typeOf[Option[_]])
           q"$parameter = $varName.flatten"
         else if (parameter.typeSignature <:< typeOf[Value])
-          q"$parameter = $varName.getOrElse(com.hypertino.binders.value.Null)"
+          q"$parameter = $varName.getOrElse(Null)"
         else if (parameter.typeSignature <:< typeOf[Map[_,_]])
           q"$parameter = $varName.getOrElse(Map.empty)"
         else if (parameter.typeSignature <:< typeOf[Vector[_]])
@@ -406,15 +406,15 @@ private [binders] trait BindersMacroImpl extends MacroAdapter[Context] {
         else if (parameter.typeSignature <:< typeOf[TraversableOnce[_]])
           q"$parameter = $varName.getOrElse(${emptyTraversable(parameter.typeSignature)})"
         else
-          q"$parameter = $varName.getOrElse(throw new com.hypertino.binders.core.FieldNotFoundException($fieldName))"
+          q"$parameter = $varName.getOrElse(throw new FieldNotFoundException($fieldName))"
       )
     } ++ {
       if (isExtraType) {
         List(
           (
-            q"var $extra: scala.collection.mutable.LinkedHashMap[String,com.hypertino.binders.value.Value] = null",
+            q"var $extra: scala.collection.mutable.LinkedHashMap[String,Value] = null",
             None,
-            q"{if ($extra == null) com.hypertino.binders.value.Obj.empty else com.hypertino.binders.value.Obj($extra)}"
+            q"{if ($extra == null) Obj.empty else Obj($extra)}"
           )
         )
       } else {
@@ -445,15 +445,15 @@ private [binders] trait BindersMacroImpl extends MacroAdapter[Context] {
                   }
                 q"""
                   if ($extra == null) {
-                    $extra = new scala.collection.mutable.LinkedHashMap[String,com.hypertino.binders.value.Value]()
+                    $extra = new scala.collection.mutable.LinkedHashMap[String,Value]()
                   }
-                  $extra += $convertedName -> $i.unbind[com.hypertino.binders.value.Value]
+                  $extra += $convertedName -> $i.unbind[Value]
                 """
               }
             }
           }
         } getOrElse {
-          throw new com.hypertino.binders.core.BindersException("Can't deserialize object: iterator didn't return fieldName")
+          throw new BindersException("Can't deserialize object: iterator didn't return fieldName")
         }
       }
 
