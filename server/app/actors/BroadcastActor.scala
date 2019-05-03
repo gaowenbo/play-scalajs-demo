@@ -1,18 +1,18 @@
 package actors
 
-import actors.Messages._
+
 import akka.actor._
-import play.api.libs.json._
+import com.wenbo.hello.shared.SharedMessages._
 
 class BroadcastActor(out: ActorRef, user: Option[String]) extends Actor with ActorLogging {
-  import actors.Messages.JsonConvertor._
+  import com.hypertino.binders.json.JsonBinders._
   def receive: Receive = {
     case Join(s) =>
-      out ! Json.toJson(Chat(s, "", "JOIN"))
+      out ! Chat(s, "", "Join").toJson
     case Broadcast(s, c) =>
-      out ! Json.toJson(Chat(s, c, "Broadcast"))
+      out ! Chat(s, c, "Broadcast").toJson
     case Leave(s) =>
-      out ! Json.toJson(Chat(s, "", "Leave"))
+      out ! Chat(s, "", "Leave").toJson
       user match {
         case Some(u) =>
           if (u == s) {

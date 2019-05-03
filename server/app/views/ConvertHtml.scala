@@ -6,7 +6,6 @@ object ConvertHtml {
     def getHtml =
       {
         var js = scalajs.html.scripts("client", routes.Assets.versioned(_).toString, name => getClass.getResource(s"/public/$name") != null)
-        println(js)
         "<!DOCTYPE html>" +
           s"""<html>
             <body>

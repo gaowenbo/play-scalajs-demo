@@ -161,7 +161,7 @@ private [binders] trait BindersMacroImpl extends MacroAdapter[Context] {
     }
 
     val block = q"""{
-      import Helpers._
+      import com.hypertino.binders.internal.Helpers._
       val $serOps = ${ctx.prefix.tree}
       val $o = $value
       ${callIfExists[S](q"$serOps.serializer", "beginObject")}
@@ -301,7 +301,7 @@ private [binders] trait BindersMacroImpl extends MacroAdapter[Context] {
             match {
               case Success($r2) => $r2
               case Failure($e2) =>
-                throw new BindersException("Value '"+$v+"' didn't match neither Left nor Right", $e2)
+                throw new com.hypertino.binders.core.BindersException("Value '"+$v+"' didn't match neither Left nor Right", $e2)
             }
         }
       $r
@@ -406,7 +406,7 @@ private [binders] trait BindersMacroImpl extends MacroAdapter[Context] {
         else if (parameter.typeSignature <:< typeOf[TraversableOnce[_]])
           q"$parameter = $varName.getOrElse(${emptyTraversable(parameter.typeSignature)})"
         else
-          q"$parameter = $varName.getOrElse(throw new FieldNotFoundException($fieldName))"
+          q"$parameter = $varName.getOrElse(throw new com.hypertino.binders.core.FieldNotFoundException($fieldName))"
       )
     } ++ {
       if (isExtraType) {
@@ -453,7 +453,7 @@ private [binders] trait BindersMacroImpl extends MacroAdapter[Context] {
             }
           }
         } getOrElse {
-          throw new BindersException("Can't deserialize object: iterator didn't return fieldName")
+          throw new com.hypertino.binders.core.BindersException("Can't deserialize object: iterator didn't return fieldName")
         }
       }
 

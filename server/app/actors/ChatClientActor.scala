@@ -1,15 +1,14 @@
 package actors
 
-import actors.Messages.{Broadcast, Chat, Join, Leave}
+import com.wenbo.hello.shared.SharedMessages._
 import akka.actor._
 import play.api.libs.json.JsValue
 
 class ChatClientActor(out: ActorRef, user: Option[String]) extends Actor with ActorLogging {
-  import actors.Messages.JsonConvertor._
-
+  import com.hypertino.binders.json.JsonBinders._
   def receive: Receive = {
-    case msg: JsValue => {
-      var chat = msg.as[Chat]
+    case msg: String => {
+      var chat = msg.parseJson[Chat]
       if (chat.sender == user.get && chat.status == "Chat") {
         out ! Broadcast(chat.sender, chat.content)
       }

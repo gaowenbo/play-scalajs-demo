@@ -1,6 +1,5 @@
 package com.wenbo.hello
 
-import com.wenbo.hello.shared.SharedMessages
 import org.scalajs.dom
 import org.scalajs.dom._
 import org.scalajs.dom.raw.{Element, HTMLTextAreaElement}
@@ -10,7 +9,7 @@ import scala.scalajs.js.timers.setTimeout
 object ScalaJSExample {
 
   def main(args: Array[String]): Unit = {
-    var route = (window.location.href.substring(window.location.protocol.size + 2 + window.location.host.size))
+    var route = (document.location.href.substring(document.location.protocol.size + 2 + document.location.host.size))
     if (route == "/" || route == "" || route.startsWith("/?")) {
       //创建一个标签
       var input = dom.document.createElement("textarea").asInstanceOf[HTMLTextAreaElement]
@@ -38,8 +37,8 @@ object ScalaJSExample {
     }
   }
 
-  private lazy val wsURL = s"ws://${window.location.host}/ws"
-  private lazy val wsURL2 = s"ws://${window.location.host}/hello"
+  private lazy val wsURL = s"ws://${document.location.host}/ws"
+  private lazy val wsURL2 = s"ws://${document.location.host}/hello"
 
   lazy val socket = new WebSocket(wsURL)
 
