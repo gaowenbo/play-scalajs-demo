@@ -96,11 +96,11 @@ extends AbstractController(cc) with SameOriginCheck with ChatFlow {
       }
   }
 
-  def chat: WebSocket = WebSocket.acceptOrResult[JsValue, JsValue] {
+  def chat: WebSocket = WebSocket.acceptOrResult[String, String] {
     case rh if sameOriginCheck(rh) =>
       var user = rh.queryString("user").headOption
-      var chatClient = ActorFlow.actorRef[JsValue, Message](out => ChatClientActor.props(out, user))
-      var broadcast =  ActorFlow.actorRef[Message, JsValue](out => BroadcastActor.props(out, user))
+      var chatClient = ActorFlow.actorRef[String, Message](out => ChatClientActor.props(out, user))
+      var broadcast =  ActorFlow.actorRef[Message, String](out => BroadcastActor.props(out, user))
 
       chatFlow(chatClient, broadcast).map { flow =>
         Right(flow)

@@ -20,7 +20,7 @@ trait ChatFlow {
     killSwitchFlow
   }
 
-  protected def chatFlow(source: Flow[JsValue, Message, _], sink: Flow[Message, JsValue, _])(implicit materializer: Materializer, ec: ExecutionContext) = {
+  protected def chatFlow(source: Flow[String, Message, _], sink: Flow[Message, String, _])(implicit materializer: Materializer, ec: ExecutionContext) = {
     var flow = source.viaMat(killSwitchFlow)(Keep.right).viaMat(sink)(Keep.right)
     Future.successful(flow)
   }

@@ -15,9 +15,11 @@ class ChatClientActor(out: ActorRef, user: Option[String]) extends Actor with Ac
     }
   }
 
-  override def preRestart(reason: Throwable, message: Option[Any]): Unit = {
+  override def preStart(): Unit = {
     user match {
-      case Some(u) => out ! Join(u)
+      case Some(u) => {
+        out ! Join(u)
+      }
       case None =>
         log.info(s"No user name ${out.path}")
         self ! PoisonPill

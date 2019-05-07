@@ -32,22 +32,17 @@ object ScalaJSExample2 {
 
   def getWebsocketUrl(document: html.Document, name: String): String = {
     var wsProtocol = if (dom.document.location.protocol == "https") "wss" else "ws"
-    s"$wsProtocol://${dom.document.location.host}/chat?user=$name}"
-  }
-
-  def ss(s: String) = {
-
-
+    s"$wsProtocol://${dom.document.location.host}/chat?user=$name"
   }
 
   def joinChat(name: String) = {
-        joinButton.disabled = true;
-        var playground = dom.document.getElementById("playground")
-      playground.innerHTML = s"Try to join chat as $name";
+      joinButton.disabled = true;
+      var playground = dom.document.getElementById("playground")
+      playground.innerHTML = s"${name}登录中。。。";
 
       var chat = new WebSocket(getWebsocketUrl(dom.document, name))
       chat.onopen = {e =>
-        playground.insertBefore(p("Chat connected"), playground.firstChild)
+        playground.insertBefore(p("连接成功！"), playground.firstChild)
         sendButton.disabled = false
         var messageField = dom.document.getElementById("message").asInstanceOf[HTMLInputElement]
         messageField.focus()
@@ -59,7 +54,8 @@ object ScalaJSExample2 {
         }
 
         sendButton.onclick = {event =>
-          chat.send(messageField.value)
+          import com.hypertino.binders.json.JsonBinders._
+          chat.send(Chat(name, messageField.value, "Chat").toJson)
           messageField.value = ""
           messageField.focus()
           event.preventDefault()
@@ -74,17 +70,28 @@ object ScalaJSExample2 {
       }
 
       chat.onmessage = {e =>
-//        import com.wenbo.hello.shared.SharedMessages.Chat
         println(e.data.toString)
         import com.hypertino.binders.json.JsonBinders._
-
-//        val message = e.data.toString.toJson
         var message = e.data.toString.parseJson[Chat]
-        print(message)
-        message.status match {
-          case "Join" =>
-            playground.insertBefore(p("Chat connectedd  "), playground.firstChild)
+        message match {
+          case Chat(sender, _, "Join") =>
+            playground.insertBefore(p(s"欢迎用户 ${sender} 登录！"), playground.firstChild)
+          case Chat(sender, content, "Broadcast") =>
+            playground.insertBefore(p(s"${sender}:${content}"), playground.firstChild)
+          case Chat(sender, _, "Leave") =>
+            playground.insertBefore(p(s"用户 ${sender} 退出"), playground.firstChild)
+          case _ => {
+            println("not supported")
+          }
         }
+//        message match {
+//          case Chat(name, content, "Join") =>
+//            playground.insertBefore(p(s"Chat connectedd  $name"), playground.firstChild)
+//          case Chat(name, content, "BroadCast") =>
+//            playground.insertBefore(p(s"Chat  $content"), playground.firstChild)
+//          case Chat(name, content, "Leave") =>
+//            playground.insertBefore(p(s"Leave  $name"), playground.firstChild)
+//        }
         e
       }
     }
