@@ -40,7 +40,7 @@ object ScalaJSExample2 {
       var playground = dom.document.getElementById("playground")
       playground.innerHTML = s"${name}登录中。。。";
 
-      var chat = new WebSocket(getWebsocketUrl(dom.document, name))
+      var chat = new WebSocket(getWebsocketUrl(dom.document, name), "wss")
       chat.onopen = {e =>
         playground.insertBefore(p("连接成功！"), playground.firstChild)
         sendButton.disabled = false
