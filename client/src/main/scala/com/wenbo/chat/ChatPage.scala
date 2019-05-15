@@ -1,25 +1,25 @@
-package com.wenbo.hello
+package com.wenbo.chat
 
 import com.wenbo.hello.shared.SharedMessages.Chat
 import org.scalajs.dom
 import org.scalajs.dom._
-import org.scalajs.dom.raw.{HTMLButtonElement, HTMLInputElement, HTMLParagraphElement, HTMLTextAreaElement}
+import org.scalajs.dom.raw.{HTMLButtonElement, HTMLInputElement, HTMLParagraphElement}
 
-import scala.scalajs.js.JSON
-import scala.scalajs.js.timers.setTimeout
-
-object ScalaJSExample2 {
-
+object ChatPage {
     var joinButton = dom.document.getElementById("join").asInstanceOf[HTMLButtonElement]
     var sendButton = dom.document.getElementById("send").asInstanceOf[HTMLButtonElement]
 
     def run = {
+        var index = document.location.href.indexOf("?")
         var nameField = dom.document.getElementById("name").asInstanceOf[HTMLInputElement]
-        import com.hypertino.binders.json.JsonBinders._
-        println(List(1, 3, 2).toJson.toString)
+
         joinButton.onclick = {event =>
-            joinChat(nameField.value)
-            event.preventDefault()
+          if (index > 0) {
+            joinChat(nameField.value, document.location.href.substring(index + 1))
+          } else {
+            joinChat(nameField.value, "")
+          }
+          event.preventDefault()
         }
         nameField.focus()
         nameField.onkeypress = {event =>
@@ -30,17 +30,17 @@ object ScalaJSExample2 {
         }
     }
 
-  def getWebsocketUrl(document: html.Document, name: String): String = {
+  def getWebsocketUrl(document: html.Document, name: String, room: String): String = {
     var wsProtocol = if (dom.document.location.protocol == "https") "wss" else "ws"
-    s"$wsProtocol://${dom.document.location.host}/chatroom?user=$name"
+    s"$wsProtocol://${dom.document.location.host}/chat?user=$name&room=$room"
   }
 
-  def joinChat(name: String) = {
+  def joinChat(name: String, room: String) = {
       joinButton.disabled = true;
       var playground = dom.document.getElementById("playground")
       playground.innerHTML = s"${name}登录中。。。";
 
-      var chat = new WebSocket(getWebsocketUrl(dom.document, name))
+      var chat = new WebSocket(getWebsocketUrl(dom.document, name, room))
       chat.onopen = {e =>
         playground.insertBefore(p("连接成功！"), playground.firstChild)
         sendButton.disabled = false
@@ -68,7 +68,11 @@ object ScalaJSExample2 {
         joinButton.disabled = false;
         sendButton.disabled = true;
       }
-
+      chat.onclose = {e =>
+        playground.insertBefore(p("连接已断开，请重新加入"), playground)
+        joinButton.disabled = false
+        joinButton.disabled = true
+      }
       chat.onmessage = {e =>
         println(e.data.toString)
         import com.hypertino.binders.json.JsonBinders._

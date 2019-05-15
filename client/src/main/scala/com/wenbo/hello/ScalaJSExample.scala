@@ -3,7 +3,7 @@ package com.wenbo.hello
 import org.scalajs.dom
 import org.scalajs.dom._
 import org.scalajs.dom.raw.{Element, HTMLTextAreaElement}
-
+import com.wenbo.chat.ChatPage
 import scala.scalajs.js.timers.setTimeout
 
 object ScalaJSExample {
@@ -34,6 +34,9 @@ object ScalaJSExample {
     } else if (route == "/convert" || route.startsWith("/convert?")) {
       println(route)
       ScalaJSExample2.run
+    } else if (route == "/chatPage" || route.startsWith("/chatPage?")) {
+      println(route)
+      ChatPage.run
     }
   }
 
