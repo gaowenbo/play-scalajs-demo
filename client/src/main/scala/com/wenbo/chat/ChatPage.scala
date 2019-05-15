@@ -31,8 +31,8 @@ object ChatPage {
     }
 
   def getWebsocketUrl(document: html.Document, name: String, room: String): String = {
-    var wsProtocol = if (dom.document.location.protocol == "https") "wss" else "ws"
-    s"$wsProtocol://${dom.document.location.host}/chat?user=$name&room=$room"
+    var wsProtocol = if (dom.document.location.protocol == "https:") "wss:" else "ws:"
+    s"$wsProtocol//${dom.document.location.host}/chat?user=$name&room=$room"
   }
 
   def joinChat(name: String, room: String) = {

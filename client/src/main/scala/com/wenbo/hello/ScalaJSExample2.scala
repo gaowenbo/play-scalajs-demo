@@ -31,9 +31,8 @@ object ScalaJSExample2 {
     }
 
   def getWebsocketUrl(document: html.Document, name: String): String = {
-    var wsProtocol = if (dom.document.location.protocol == "https") "wss" else "ws"
-    s"wss://${dom.document.location.host}/chatroom?user=$name"
-//    s"$wsProtocol://${dom.document.location.host}/chatroom?user=$name"
+    var wsProtocol = if (dom.document.location.protocol == "https:") "wss:" else "ws:"
+    s"$wsProtocol//${dom.document.location.host}/chatroom?user=$name"
   }
 
   def joinChat(name: String) = {
