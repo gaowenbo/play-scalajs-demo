@@ -21,7 +21,7 @@ object ConvertHtml {
                 <input id="send" type="button" value="Send" disabled="true"/>
               </form>
 
-              <div id="playground"/>
+              <div id="playground"></div>
               ${js}
             </body>
           </html>"""
