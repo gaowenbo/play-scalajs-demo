@@ -29,7 +29,7 @@ class ChatController @Inject()(cc: ControllerComponents) extends AbstractControl
   def getFromMap(str: String) = {
     this.synchronized({
       if (!amMap.contains(str)) {
-        implicit val actorSystem = ActorSystem("akkasss" + str, ConfigFactory.load().getConfig("LocalNode"))
+        implicit val actorSystem = ActorSystem("akkasss" + str)
         implicit val mat = ActorMaterializer()
         var (hubSink: Sink[Message, NotUsed], hubSource: Source[Message, NotUsed]) = MergeHub.source[Message](16).toMat(BroadcastHub.sink(256))(Keep.both).run()
         var killSwitchFlow: Flow[Message, Message, UniqueKillSwitch] = {
