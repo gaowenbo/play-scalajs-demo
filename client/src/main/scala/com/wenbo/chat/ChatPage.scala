@@ -42,7 +42,7 @@ object ChatPage {
 
       var chat = new WebSocket(getWebsocketUrl(dom.document, name, room))
       chat.onopen = {e =>
-        playground.insertBefore(p("连接成功！"), playground)
+        playground.insertBefore(p("连接成功！"), playground.firstChild)
         sendButton.disabled = false
         var messageField = dom.document.getElementById("message").asInstanceOf[HTMLInputElement]
         messageField.focus()
@@ -64,12 +64,12 @@ object ChatPage {
       }
 
       chat.onerror = {e =>
-        playground.insertBefore(p(s"failed : code ${e.asInstanceOf[ErrorEvent].colno}"), playground)
+        playground.insertBefore(p(s"failed : code ${e.asInstanceOf[ErrorEvent].colno}"), playground.firstChild)
         joinButton.disabled = false;
         sendButton.disabled = true;
       }
       chat.onclose = {e =>
-        playground.insertBefore(p("连接已断开，请重新加入"), playground)
+        playground.insertBefore(p("连接已断开，请重新加入"), playground.firstChild)
         joinButton.disabled = false
         joinButton.disabled = true
       }
