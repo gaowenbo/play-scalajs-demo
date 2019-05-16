@@ -42,7 +42,7 @@ object ChatPage {
 
       var chat = new WebSocket(getWebsocketUrl(dom.document, name, room))
       chat.onopen = {e =>
-        playground.insertBefore(p("连接成功！"), playground.firstChild)
+        playground.insertBefore(p("连接成功！"), playground)
         sendButton.disabled = false
         var messageField = dom.document.getElementById("message").asInstanceOf[HTMLInputElement]
         messageField.focus()
