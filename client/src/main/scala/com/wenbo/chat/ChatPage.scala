@@ -38,7 +38,7 @@ object ChatPage {
   def joinChat(name: String, room: String) = {
       joinButton.disabled = true;
       var playground = dom.document.getElementById("playground")
-      playground.innerHTML = s"${name}登录中。。。";
+      playground.appendChild(p(s"${name}登录中。。。"))
 
       var chat = new WebSocket(getWebsocketUrl(dom.document, name, room))
       chat.onopen = {e =>
