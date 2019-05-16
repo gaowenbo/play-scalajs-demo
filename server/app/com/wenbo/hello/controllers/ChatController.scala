@@ -6,8 +6,6 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.{BroadcastHub, Flow, Keep, MergeHub, Sink, Source}
 import akka.stream.{ActorMaterializer, KillSwitches, Materializer, UniqueKillSwitch}
-import akka.util.Timeout
-import com.typesafe.config.ConfigFactory
 import javax.inject.{Inject, Named}
 import play.api.Logger
 import play.api.libs.json.Json

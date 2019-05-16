@@ -71,7 +71,7 @@ object ChatPage {
       chat.onclose = {e =>
         playground.insertBefore(p("连接已断开，请重新加入"), playground.firstChild)
         joinButton.disabled = false
-        joinButton.disabled = true
+        sendButton.disabled = true
       }
       chat.onmessage = {e =>
         println(e.data.toString)
