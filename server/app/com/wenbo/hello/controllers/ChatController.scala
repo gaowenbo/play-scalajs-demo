@@ -1,6 +1,6 @@
 package com.wenbo.hello.controllers
 
-import actors.{BroadcastActor, ChatClientActor}
+import actors.{BroadcastActor, ChatClientActor, ChatRoomActor}
 import akka.NotUsed
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.ws.Message
@@ -16,9 +16,9 @@ import views.ConvertHtml
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 
-class ChatController @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
+class ChatController @Inject()(cc: ControllerComponents)(implicit actorSystem: ActorSystem, mat: Materializer, ec: ExecutionContext) extends AbstractController(cc) {
   val logger = play.api.Logger(getClass)
-  protected val amMap = new scala.collection.mutable.HashMap[String, (ActorSystem, Materializer, Flow[Message, Message, UniqueKillSwitch])]
+  protected val amMap = new scala.collection.mutable.HashMap[String, (ActorSystem, Materializer, Flow[Message, Message, _])]
 
   def chatPage = Action {
     Ok(ConvertHtml.getHtml).as(HTML)
@@ -27,27 +27,50 @@ class ChatController @Inject()(cc: ControllerComponents) extends AbstractControl
   def getFromMap(str: String) = {
     this.synchronized({
       if (!amMap.contains(str)) {
-        implicit val actorSystem = ActorSystem("akkasss" + str)
-        implicit val mat = ActorMaterializer()
-        var (hubSink: Sink[Message, NotUsed], hubSource: Source[Message, NotUsed]) = MergeHub.source[Message](16).toMat(BroadcastHub.sink(256))(Keep.both).run()
-        var killSwitchFlow: Flow[Message, Message, UniqueKillSwitch] = {
+        var chatRoom = ActorFlow.actorRef[Message, Message](out => ChatRoomActor.props(out, Option[String](str)))
+
+        var (hubSink: Sink[Message, NotUsed], hubSource: Source[Message, NotUsed]) = MergeHub.source[Message](16).via(chatRoom).toMat(BroadcastHub.sink(256))(Keep.both).run()
+//        var killSwitchFlow: Flow[Message, Message, UniqueKillSwitch] = {
+//          Flow.fromSinkAndSource(hubSink, hubSource).joinMat((KillSwitches.singleBidi[Message, Message]))(Keep.right).backpressureTimeout(3 second)
+//        }
+        var killSwitchFlow: Flow[Message, Message, _] = {
           Flow.fromSinkAndSource(hubSink, hubSource).joinMat((KillSwitches.singleBidi[Message, Message]))(Keep.right).backpressureTimeout(3 second)
         }
+
         amMap.put(str, (actorSystem, mat, killSwitchFlow))
       }
       amMap.getOrElse(str, null)
     })
   }
+//  def getFromMap2(str: String) = {
+//    this.synchronized({
+//      if (!amMap.contains("2")) {
+//        implicit val actorSystem = ActorSystem("akkasss" + str)
+//        implicit val mat = ActorMaterializer()
+//        var (hubSink: Sink[Message, NotUsed], hubSource: Source[Message, NotUsed]) = MergeHub.source[Message](16).toMat(BroadcastHub.sink(256))(Keep.both).run()
+//        var killSwitchFlow: Flow[Message, Message, UniqueKillSwitch] = {
+//          Flow.fromSinkAndSource(hubSink, hubSource).joinMat((KillSwitches.singleBidi[Message, Message]))(Keep.right).backpressureTimeout(3 second)
+//        }
+//        amMap.put(("2"), (actorSystem, mat, killSwitchFlow))
+//      }
+//      var m = amMap.getOrElse(("2"), null)
+//
+//      (m._1, m._2, m._3)
+//
+//    })
+//  }
 
   def chat: WebSocket = WebSocket.acceptOrResult[String, String] {
     case rh if sameOriginCheck(rh) =>
       var user = rh.queryString("user").headOption
       var room = rh.queryString("room").headOption
-      implicit val (actorSystem, mat, killSwitchFlow): (ActorSystem, Materializer,  Flow[Message, Message, UniqueKillSwitch]) = getFromMap(room.get)
+      val (actorSystem1, mat1, killSwitchFlow): (ActorSystem, Materializer,  Flow[Message, Message, _]) = getFromMap(room.get)
       var chatClient = ActorFlow.actorRef[String, Message](out => ChatClientActor.props(out, user))
       var broadcast =  ActorFlow.actorRef[Message, String](out => BroadcastActor.props(out, user))
-      implicit val ec = actorSystem.dispatcher
+//      implicit val ec = actorSystem.dispatcher
       var flow = chatClient.viaMat(killSwitchFlow)(Keep.right).viaMat(broadcast)(Keep.right)
+//     var flow = chatClient.viaMat(broadcast)(Keep.right)
+
       Future.successful(flow).map { flow =>
         Right(flow)
       }.recover {
